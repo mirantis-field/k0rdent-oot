@@ -28,25 +28,41 @@ identityRef: # @schema description: OpenStack identity configuration; type: obje
   name: "" # @schema description: Secret name containing OpenStack credentials; type: string
   cloudName: "" # @schema description: Cloud name from clouds.yaml; type: string
 
-# Enhanced: Support for existing networks
-useExistingNetwork: false # @schema description: Whether to use existing OpenStack network; type: boolean
-existingNetwork: # @schema description: Existing network configuration; type: object
+# Networking configuration
+networking: # @schema description: Networking configuration; type: object
+  # Enhanced: Support for existing networks
+  useExistingNetwork: false # @schema description: Whether to use existing OpenStack network; type: boolean
+  existingNetwork: # @schema description: Existing network configuration; type: object
+    name: "" # @schema description: Name of existing network; type: string
+    id: "" # @schema description: ID of existing network; type: string
+  existingSubnet: # @schema description: Existing subnet configuration; type: object
+    name: "" # @schema description: Name of existing subnet; type: string
+    id: "" # @schema description: ID of existing subnet; type: string
+  
+  # Standard managed subnets (used when useExistingNetwork is false)
+  managedSubnets: # @schema description: Managed subnet configuration; type: array
+  - cidr: 10.6.0.0/24
+
+  externalNetwork: # @schema description: External network configuration; type: object
+    filter: # @schema description: Network filter; type: object
+      name: "" # @schema description: External network name; type: string
+
+# Legacy fields for backward compatibility (deprecated)
+useExistingNetwork: false # @schema description: DEPRECATED: Use networking.useExistingNetwork instead; type: boolean
+existingNetwork: # @schema description: DEPRECATED: Use networking.existingNetwork instead; type: object
   name: "" # @schema description: Name of existing network; type: string
   id: "" # @schema description: ID of existing network; type: string
-existingSubnet: # @schema description: Existing subnet configuration; type: object
+existingSubnet: # @schema description: DEPRECATED: Use networking.existingSubnet instead; type: object
   name: "" # @schema description: Name of existing subnet; type: string
   id: "" # @schema description: ID of existing subnet; type: string
-
-# Standard managed subnets (used when useExistingNetwork is false)
-managedSubnets: # @schema description: Managed subnet configuration; type: array
+managedSubnets: # @schema description: DEPRECATED: Use networking.managedSubnets instead; type: array
 - cidr: 10.6.0.0/24
+externalNetwork: # @schema description: DEPRECATED: Use networking.externalNetwork instead; type: object
+  filter: # @schema description: Network filter; type: object
+    name: "" # @schema description: External network name; type: string
 
 managedSecurityGroups: # @schema description: Managed security groups configuration; type: object
   allowAllInClusterTraffic: false # @schema description: Allow all traffic within cluster; type: boolean
-
-externalNetwork: # @schema description: External network configuration; type: object
-  filter: # @schema description: Network filter; type: object
-    name: "" # @schema description: External network name; type: string
 
 # API Server LoadBalancer configuration
 apiServerLoadBalancer: # @schema description: API server load balancer configuration; type: object

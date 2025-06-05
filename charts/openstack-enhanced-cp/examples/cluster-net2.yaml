@@ -1,15 +1,15 @@
 apiVersion: k0rdent.mirantis.com/v1beta1
 kind: ClusterDeployment
 metadata:
-  name: my-net2-cluster
+  name: dev-cluster
   namespace: kcm-system
 spec:
   template: openstack-enhanced-cp-1-0-0
   credential: openstack-cluster-identity-cred
   config:
     # Cluster configuration
-    controlPlaneNumber: 3
-    workersNumber: 2
+    controlPlaneNumber: 1
+    workersNumber: 3
     
     # Control plane configuration
     controlPlane:
@@ -17,10 +17,10 @@ spec:
       image:
         filter:
           name: "ubuntu-22.04"
-      sshKeyName: "your-keypair"
+      sshKeyName: "poc-k0rdent-mgmt-key"
       rootVolume:
         size: 50
-        volumeType: "ssd"  # Specify your volume type
+        volumeType: "volumes"  # Specify your volume type
     
     # Worker configuration
     worker:
@@ -28,35 +28,24 @@ spec:
       image:
         filter:
           name: "ubuntu-22.04"
-      sshKeyName: "your-keypair"
+      sshKeyName: "exness-k0rdent-mgmt-key"
       rootVolume:
         size: 50
-        volumeType: "ssd"  # Specify your volume type
+        volumeType: "volumes"  # Specify your volume type
     
     # Enhanced: Use existing network net-2 and subnet-net-2
-    useExistingNetwork: true
-    existingNetwork:
-      name: "net-2"
-    existingSubnet:
-      name: "subnet-net-2"
-    
-    # External network configuration
-    externalNetwork:
-      filter:
-        name: "external"  # Replace with your external network name
+    networking:
+      useExistingNetwork: true
+      existingNetwork:
+        name: "jhennig-k0rdent-managed-cluster-network"
+      existingSubnet:
+        name: "jhennig-k0s-subnet"
+      externalNetwork:
+        filter:
+          name: "public"
     
     # Identity configuration
     identityRef:
       name: "openstack-cluster-identity-cred"
       cloudName: "openstack"
-      region: "RegionOne"  # Replace with your region
-    
-    # OpenStack Cloud Controller Manager
-    ccmRegional: true
-    
-    # Optional: Enable CCM CA certificate if needed
-    # ccmCaCert:
-    #   enabled: true
-    #   source: "secret"
-    #   secretName: "openstack-ca-cert"
-    #   key: "ca.crt" 
+      region: "RegionOne"  # Replace with your region 

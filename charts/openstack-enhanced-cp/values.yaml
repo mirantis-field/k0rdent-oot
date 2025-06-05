@@ -1,126 +1,107 @@
-# @schema title: OpenStack Enhanced Control Plane Configuration
-# @schema description: Configuration for OpenStack based Kubernetes cluster with enhanced features
+controlPlaneNumber: 3
+workersNumber: 2
 
-# Cluster parameters
-clusterIdentity: # @schema description: The OpenStack Service Account credentials secret reference, auto-populated; type: object
-  name: "" # @schema description: The OpenStack Service Account credentials secret name, auto-populated; type: string
+clusterNetwork:
+  pods:
+    cidrBlocks:
+    - "10.244.0.0/16"
+  services:
+    cidrBlocks:
+    - "10.96.0.0/12"
+  serviceDomain: "cluster.local"
 
-cluster: # @schema description: Basic cluster information; type: object
-  name: "" # @schema description: The name of the cluster; type: string
-  namespace: "" # @schema description: The namespace where cluster resources will be created; type: string
+clusterLabels: {}
+clusterAnnotations: {}
 
-clusterLabels: {} # @schema description: Labels to apply to the cluster; type: object; additionalProperties: true
-clusterAnnotations: {} # @schema description: Annotations to apply to the cluster; type: object; additionalProperties: true
+ccmRegional: true
 
-clusterNetwork: # @schema description: The cluster network configuration; type: object
-  pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
-    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; items: string
-      - "10.244.0.0/16"
-  services: # @schema description: The network ranges from which service VIPs are allocated; type: object
-    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; items: string
-      - "10.96.0.0/12"
-  serviceDomain: cluster.local # @schema description: Domain name for services; type: string
+identityRef:
+  name: ""
+  cloudName: ""
+  region: ""
 
-# OpenStack parameters
-region: "" # @schema description: OpenStack region where resources will be created; type: string
+bastion:
+  enabled: false
+  spec:
+    sshKeyName: ""
+    providerID: ""
+    flavor: ""
+    image:
+      filter:
+        name: ""
 
-identityRef: # @schema description: OpenStack identity configuration; type: object
-  name: "" # @schema description: Secret name containing OpenStack credentials; type: string
-  cloudName: "" # @schema description: Cloud name from clouds.yaml; type: string
+managedSecurityGroups:
+  allowAllInClusterTraffic: false
 
-# Networking configuration
-networking: # @schema description: Networking configuration; type: object
-  # Enhanced: Support for existing networks
-  useExistingNetwork: false # @schema description: Whether to use existing OpenStack network; type: boolean
-  existingNetwork: # @schema description: Existing network configuration; type: object
-    name: "" # @schema description: Name of existing network; type: string
-    id: "" # @schema description: ID of existing network; type: string
-  existingSubnet: # @schema description: Existing subnet configuration; type: object
-    name: "" # @schema description: Name of existing subnet; type: string
-    id: "" # @schema description: ID of existing subnet; type: string
-  
-  # Standard managed subnets (used when useExistingNetwork is false)
-  managedSubnets: # @schema description: Managed subnet configuration; type: array
+# Network configuration - supports both managed and existing networks
+networking:
+  # Set to true to use existing OpenStack network and subnet
+  useExistingNetwork: false
+  # Existing network configuration (used when useExistingNetwork is true)
+  existingNetwork:
+    id: ""
+    filter:
+      name: ""
+  # Existing subnet configuration (used when useExistingNetwork is true)  
+  existingSubnet:
+    id: ""
+    filter:
+      name: ""
+  # Managed subnets (used when useExistingNetwork is false)
+  managedSubnets:
   - cidr: 10.6.0.0/24
 
-  externalNetwork: # @schema description: External network configuration; type: object
-    filter: # @schema description: Network filter; type: object
-      name: "" # @schema description: External network name; type: string
+apiServerLoadBalancer:
+  enabled: true
 
-# Legacy fields for backward compatibility (deprecated)
-useExistingNetwork: false # @schema description: DEPRECATED: Use networking.useExistingNetwork instead; type: boolean
-existingNetwork: # @schema description: DEPRECATED: Use networking.existingNetwork instead; type: object
-  name: "" # @schema description: Name of existing network; type: string
-  id: "" # @schema description: ID of existing network; type: string
-existingSubnet: # @schema description: DEPRECATED: Use networking.existingSubnet instead; type: object
-  name: "" # @schema description: Name of existing subnet; type: string
-  id: "" # @schema description: ID of existing subnet; type: string
-managedSubnets: # @schema description: DEPRECATED: Use networking.managedSubnets instead; type: array
-- cidr: 10.6.0.0/24
-externalNetwork: # @schema description: DEPRECATED: Use networking.externalNetwork instead; type: object
-  filter: # @schema description: Network filter; type: object
-    name: "" # @schema description: External network name; type: string
+externalNetwork:
+  filter:
+    name: ""
 
-managedSecurityGroups: # @schema description: Managed security groups configuration; type: object
-  allowAllInClusterTraffic: false # @schema description: Allow all traffic within cluster; type: boolean
-
-# API Server LoadBalancer configuration
-apiServerLoadBalancer: # @schema description: API server load balancer configuration; type: object
-  enabled: false # @schema description: Whether to enable API server load balancer; type: boolean
-
-bastion: # @schema description: Bastion host configuration; type: object
-  enabled: false # @schema description: Whether to enable bastion host; type: boolean
-  spec: # @schema description: Bastion specification; type: object
-    sshKeyName: "" # @schema description: SSH key name for bastion; type: string
-    providerID: "" # @schema description: Provider ID for bastion; type: string
-    flavor: "" # @schema description: Flavor for bastion host; type: string
-    image: # @schema description: Image configuration; type: object
-      filter: # @schema description: Image filter; type: object
-        name: "" # @schema description: Image name; type: string
-
-# OpenStack machines parameters
-controlPlane: # @schema description: Control plane parameters; type: object
-  replicas: 3 # @schema description: Number of control plane nodes; type: integer; minimum: 1
-  flavor: "" # @schema description: OpenStack flavor for control plane nodes; type: string
-  image: # @schema description: Image configuration; type: object
-    filter: # @schema description: Image filter; type: object
-      name: "" # @schema description: Image name; type: string
-  sshKeyName: "" # @schema description: SSH key name; type: string
-  # Enhanced: Support for volume types
-  rootVolume: # @schema description: Root volume configuration; type: object
-    size: 50 # @schema description: Root volume size in GB; type: integer; minimum: 1
-    volumeType: "" # @schema description: Volume type; type: string
-    availabilityZone: "" # @schema description: Availability zone; type: string
-  additionalBlockDevices: [] # @schema description: Additional block devices; type: array
-  securityGroups: # @schema description: Security groups; type: array
+controlPlane:
+  sshKeyName: ""
+  providerID: ""
+  flavor: ""
+  image:
+    filter:
+      name: ""
+  portOpts: []
+  rootVolume: 
+    sizeGiB: 50
+    type: ""  # Cinder volume type - leave empty for default
+    availabilityZone:
+      name: ""
+      from: ""  # Options: "Name" or "Machine"
+  additionalBlockDevices: []
+  securityGroups:
     - filter:
         name: "default"
         description: ""
         projectID: ""
 
-worker: # @schema description: Worker parameters; type: object
-  replicas: 2 # @schema description: Number of worker nodes; type: integer; minimum: 0
-  flavor: "" # @schema description: OpenStack flavor for worker nodes; type: string
-  image: # @schema description: Image configuration; type: object
-    filter: # @schema description: Image filter; type: object
-      name: "" # @schema description: Image name; type: string
-  sshKeyName: "" # @schema description: SSH key name; type: string
-  # Enhanced: Support for volume types
-  rootVolume: # @schema description: Root volume configuration; type: object
-    size: 50 # @schema description: Root volume size in GB; type: integer; minimum: 1
-    volumeType: "" # @schema description: Volume type; type: string
-    availabilityZone: "" # @schema description: Availability zone; type: string
-  additionalBlockDevices: [] # @schema description: Additional block devices; type: array
-  securityGroups: # @schema description: Security groups; type: array
+worker:
+  sshKeyName: ""
+  providerID: ""
+  flavor: ""
+  image:
+    filter:
+      name: ""
+  portOpts: []
+  rootVolume:
+    sizeGiB: 50
+    type: ""  # Cinder volume type - leave empty for default
+    availabilityZone:
+      name: ""
+      from: ""  # Options: "Name" or "Machine"
+  additionalBlockDevices: []
+  securityGroups:
     - filter:
         name: "default"
         description: ""
         projectID: ""
 
-# K0s parameters
-k0s: # @schema description: K0s parameters; type: object
-  version: v1.32.3+k0s.0 # @schema description: K0s version; type: string
-  api: # @schema description: Kubernetes API server parameters; type: object
-    extraArgs: {} # @schema description: Extra arguments for API server; type: object; additionalProperties: true
-  telemetry: # @schema description: Telemetry configuration; type: object
-    enabled: false # @schema description: Whether to enable telemetry; type: boolean 
+k0s:
+  version: v1.32.5+k0s.1
+  api:
+    extraArgs: {}
+

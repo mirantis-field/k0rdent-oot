@@ -1,0 +1,83 @@
+apiVersion: hmc.mirantis.com/v1alpha1
+kind: ClusterDeployment
+metadata:
+  name: openstack-enhanced-existing-network
+  namespace: hmc-system
+spec:
+  template: openstack-enhanced-cp
+  credential: openstack-credential
+  config:
+    # Basic cluster configuration
+    controlPlaneNumber: 3
+    workersNumber: 2
+    
+    # Cluster identity and region
+    identityRef:
+      name: "openstack-credential"
+      cloudName: "openstack"
+      region: "RegionOne"
+    
+    # Network configuration - using existing network and subnet
+    networking:
+      useExistingNetwork: true
+      existingNetwork:
+        filter:
+          name: "net-1"  # Existing network name
+      existingSubnet:
+        filter:
+          name: "subnet-net-1"  # Existing subnet name
+    
+    # External network for floating IPs
+    externalNetwork:
+      filter:
+        name: "public"
+    
+    # Control plane configuration with volume type
+    controlPlane:
+      flavor: "m1.medium"
+      sshKeyName: "my-keypair"
+      image:
+        filter:
+          name: "ubuntu-22.04-kubernetes"
+      rootVolume:
+        sizeGiB: 50
+        type: "ssd"  # Specify volume type
+        availabilityZone:
+          from: "Name"
+          name: "nova"
+      securityGroups:
+        - filter:
+            name: "default"
+    
+    # Worker configuration with volume type
+    worker:
+      flavor: "m1.large"
+      sshKeyName: "my-keypair"
+      image:
+        filter:
+          name: "ubuntu-22.04-kubernetes"
+      rootVolume:
+        sizeGiB: 100
+        type: "ssd"  # Specify volume type
+        availabilityZone:
+          from: "Name"
+          name: "nova"
+      securityGroups:
+        - filter:
+            name: "default"
+    
+    # Security groups configuration
+    managedSecurityGroups:
+      allowAllInClusterTraffic: false
+    
+    # API server load balancer
+    apiServerLoadBalancer:
+      enabled: true
+    
+    # K0s configuration
+    k0s:
+      version: "v1.32.5+k0s.1"
+      api:
+        extraArgs:
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10" 

@@ -1,52 +1,57 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: {{ .Values.cluster.name }}-cp-mt
-  namespace: {{ .Values.cluster.namespace }}
-  labels:
-    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
+  name: {{ include "openstackmachinetemplate.controlplane.name" . }}
 spec:
   template:
     spec:
       flavor: {{ .Values.controlPlane.flavor }}
+      identityRef:
+        name: {{ .Values.identityRef.name }}
+        region: {{ .Values.identityRef.region }}
+        cloudName: {{ .Values.identityRef.cloudName}}
       image:
         filter:
           name: {{ .Values.controlPlane.image.filter.name }}
-      sshKeyName: {{ .Values.controlPlane.sshKeyName }}
-      {{- if .Values.controlPlane.providerID }}
-      providerID: {{ .Values.controlPlane.providerID }}
+          {{- if .Values.controlPlane.image.filter.tags }}
+          tags:
+            {{- range $tag := .Values.controlPlane.image.filter.tags }}
+            - {{ $tag }}
+            {{- end }}
+          {{- end }}
+      {{- if gt (len .Values.controlPlane.portOpts) 0 }}
+      portOpts:
+        {{ .Values.controlPlane.portOpts | toYaml | nindent 8 }}
       {{- end }}
-      
-      # Enhanced root volume configuration with volume type support
+      {{- if .Values.controlPlane.rootVolume }}
+      {{- if .Values.controlPlane.rootVolume.sizeGiB }}
       rootVolume:
-        size: {{ .Values.controlPlane.rootVolume.size }}
-        {{- if .Values.controlPlane.rootVolume.volumeType }}
-        volumeType: {{ .Values.controlPlane.rootVolume.volumeType }}
+        sizeGiB: {{ .Values.controlPlane.rootVolume.sizeGiB }}
+        {{- if .Values.controlPlane.rootVolume.type }}
+        type: {{ .Values.controlPlane.rootVolume.type }}
         {{- end }}
         {{- if .Values.controlPlane.rootVolume.availabilityZone }}
-        availabilityZone: {{ .Values.controlPlane.rootVolume.availabilityZone }}
+        {{- if or .Values.controlPlane.rootVolume.availabilityZone.name .Values.controlPlane.rootVolume.availabilityZone.from }}
+        availabilityZone:
+          {{- if .Values.controlPlane.rootVolume.availabilityZone.from }}
+          from: {{ .Values.controlPlane.rootVolume.availabilityZone.from }}
+          {{- end }}
+          {{- if .Values.controlPlane.rootVolume.availabilityZone.name }}
+          name: {{ .Values.controlPlane.rootVolume.availabilityZone.name }}
+          {{- end }}
         {{- end }}
-      
-      {{- if .Values.controlPlane.additionalBlockDevices }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if gt (len .Values.controlPlane.additionalBlockDevices) 0 }}
       additionalBlockDevices:
-        {{- toYaml .Values.controlPlane.additionalBlockDevices | nindent 8 }}
+        {{ .Values.controlPlane.additionalBlockDevices | toYaml | nindent 8 }}
       {{- end }}
-      
-      {{- if .Values.controlPlane.portOpts }}
-      portOpts:
-        {{- toYaml .Values.controlPlane.portOpts | nindent 8 }}
-      {{- end }}
-      
+      {{- if gt (len .Values.controlPlane.securityGroups) 0 }}
       securityGroups:
-        {{- toYaml .Values.controlPlane.securityGroups | nindent 8 }}
-      
-      {{- if .Values.networking.useExistingNetwork }}
-      # Use existing subnet for control plane
-      subnet:
-        {{- if .Values.networking.existingSubnet.id }}
-        id: {{ .Values.networking.existingSubnet.id }}
-        {{- else }}
-        filter:
-          name: {{ .Values.networking.existingSubnet.name }}
-        {{- end }}
-      {{- end }} 
+        {{ .Values.controlPlane.securityGroups | toYaml | nindent 8 }}
+      {{- end }}
+      {{- $sshKey := .Values.controlPlane.sshKeyName | default .Values.controlPlane.sshPublicKey }}
+      {{- if $sshKey }}
+      sshKeyName: {{ $sshKey }}
+      {{- end }}

@@ -1,61 +1,55 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackCluster
 metadata:
-  name: {{ .Values.cluster.name }}
-  namespace: {{ .Values.cluster.namespace }}
-  labels:
-    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
+  name: {{ include "cluster.name" . }}
 spec:
+  {{- if .Values.apiServerLoadBalancer }}
+  apiServerLoadBalancer:
+    {{- toYaml .Values.apiServerLoadBalancer | nindent 4 }}
+  {{- end }}
+  {{- if .Values.bastion.enabled }}
+  bastion:
+  {{- with .Values.bastion.spec }}
+    spec:
+      {{- toYaml . | nindent 8 }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.externalNetwork }}
+  externalNetwork:
+    {{- toYaml .Values.externalNetwork | nindent 4 }}
+  {{- end }}
+  {{- if .Values.identityRef }}
+  identityRef:
+    name: {{ .Values.identityRef.name }}
+    cloudName: {{ .Values.identityRef.cloudName | default "openstack" }}
+    region: {{ .Values.identityRef.region | default "RegionOne" }}
+  {{- end }}
+  managedSecurityGroups:
+    {{- toYaml .Values.managedSecurityGroups | nindent 4 }}
   {{- if .Values.networking.useExistingNetwork }}
-  # Use existing network configuration
+  # Use existing network and subnet
+  {{- if .Values.networking.existingNetwork }}
   network:
     {{- if .Values.networking.existingNetwork.id }}
     id: {{ .Values.networking.existingNetwork.id }}
-    {{- else }}
+    {{- else if .Values.networking.existingNetwork.filter.name }}
     filter:
-      name: {{ .Values.networking.existingNetwork.name }}
+      name: {{ .Values.networking.existingNetwork.filter.name }}
     {{- end }}
+  {{- end }}
+  {{- if .Values.networking.existingSubnet }}
   subnet:
     {{- if .Values.networking.existingSubnet.id }}
     id: {{ .Values.networking.existingSubnet.id }}
-    {{- else }}
+    {{- else if .Values.networking.existingSubnet.filter.name }}
     filter:
-      name: {{ .Values.networking.existingSubnet.name }}
+      name: {{ .Values.networking.existingSubnet.filter.name }}
     {{- end }}
+  {{- end }}
   {{- else }}
-  # Create managed network and subnets
+  # Use managed subnets
+  {{- if .Values.networking.managedSubnets }}
   managedSubnets:
     {{- toYaml .Values.networking.managedSubnets | nindent 4 }}
   {{- end }}
-  
-  externalNetwork:
-    filter:
-      name: {{ .Values.networking.externalNetwork.filter.name }}
-  
-  identityRef:
-    kind: Secret
-    name: {{ .Values.identityRef.name }}
-  
-  {{- if .Values.managedSecurityGroups }}
-  managedSecurityGroups:
-    {{- toYaml .Values.managedSecurityGroups | nindent 4 }}
   {{- end }}
-  
-  {{- if .Values.apiServerLoadBalancer.enabled }}
-  apiServerLoadBalancer:
-    enabled: {{ .Values.apiServerLoadBalancer.enabled }}
-  {{- end }}
-  
-  {{- if .Values.bastion.enabled }}
-  bastion:
-    enabled: {{ .Values.bastion.enabled }}
-    spec:
-      flavor: {{ .Values.bastion.spec.flavor }}
-      image:
-        filter:
-          name: {{ .Values.bastion.spec.image.filter.name }}
-      sshKeyName: {{ .Values.bastion.spec.sshKeyName }}
-      {{- if .Values.bastion.spec.providerID }}
-      providerID: {{ .Values.bastion.spec.providerID }}
-      {{- end }}
-  {{- end }} 

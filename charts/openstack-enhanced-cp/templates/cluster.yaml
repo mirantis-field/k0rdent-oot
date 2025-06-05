@@ -1,31 +1,23 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: {{ .Values.cluster.name }}
-  namespace: {{ .Values.cluster.namespace }}
-  {{- with .Values.clusterAnnotations }}
-  annotations:
+  name: {{ include "cluster.name" . }}
+  {{- if .Values.clusterLabels }}
+  labels: {{- toYaml .Values.clusterLabels | nindent 4}}
+  {{- end }}
+  {{- if .Values.clusterAnnotations }}
+  annotations: {{- toYaml .Values.clusterAnnotations | nindent 4}}
+  {{- end }}
+spec:
+  {{- with .Values.clusterNetwork }}
+  clusterNetwork:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  labels:
-    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
-    {{- with .Values.clusterLabels }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-  clusterNetwork:
-    pods:
-      cidrBlocks:
-        {{- toYaml .Values.clusterNetwork.pods.cidrBlocks | nindent 8 }}
-    services:
-      cidrBlocks:
-        {{- toYaml .Values.clusterNetwork.services.cidrBlocks | nindent 8 }}
-    serviceDomain: {{ .Values.clusterNetwork.serviceDomain }}
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: K0sControlPlane
-    name: {{ .Values.cluster.name }}-cp
+    name: {{ include "k0scontrolplane.name" .  }}
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: OpenStackCluster
-    name: {{ .Values.cluster.name }} 
+    name: {{ include "cluster.name" . }}

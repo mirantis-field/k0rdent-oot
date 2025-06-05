@@ -1,14 +1,31 @@
-{{- if gt (.Values.workersNumber | int) 0 }}
+{{- $global := .Values.global | default dict }}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: K0sWorkerConfigTemplate
 metadata:
-  name: {{ .Values.cluster.name }}-worker-bootstrap
-  namespace: {{ .Values.cluster.namespace }}
-  labels:
-    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
+  name: {{ include "k0sworkerconfigtemplate.name" . }}
 spec:
   template:
     spec:
-      preK0sCommands:
-      - mkdir -p /etc/kubernetes
-{{- end }} 
+      {{- if $global.k0sURL }}
+      downloadURL: "{{ $global.k0sURL }}/k0s-{{ .Values.k0s.version }}-amd64"
+      {{- end }}
+      {{- if or $global.registryCertSecret $global.k0sURLCertSecret }}
+      {{- $certs := dict "registry.crt" $global.registryCertSecret "k0s-url.crt" $global.k0sURLCertSecret }}
+      files:
+        {{- range $path, $secret := $certs }}
+        {{- if $secret }}
+        - contentFrom:
+            secretRef:
+              name: {{ $secret }}
+              key: tls.crt
+          permissions: "0664"
+          path: /usr/local/share/ca-certificates/{{ $path }}
+        {{- end }}
+        {{- end }}
+      preStartCommands:
+      - "sudo update-ca-certificates"
+      {{- end }}
+      args:
+      - --enable-cloud-provider
+      - --kubelet-extra-args="--cloud-provider=external"
+      version: {{ .Values.k0s.version }}

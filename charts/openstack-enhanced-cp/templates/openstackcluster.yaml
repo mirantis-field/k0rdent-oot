@@ -18,6 +18,21 @@ spec:
   externalNetwork:
     {{- toYaml .Values.externalNetwork | nindent 4 }}
   {{- end }}
+  {{- if .Values.disableExternalNetwork }}
+  disableExternalNetwork: {{ .Values.disableExternalNetwork }}
+  {{- end }}
+  {{- if .Values.network }}
+  network:
+    {{- toYaml .Values.network | nindent 4 }}
+  {{- end }}
+  {{- if .Values.subnets }}
+  subnets:
+    {{- toYaml .Values.subnets | nindent 4 }}
+  {{- end }}
+  {{- if .Values.router }}
+  router:
+    {{- toYaml .Values.router | nindent 4 }}
+  {{- end }}
   {{- if .Values.identityRef }}
   identityRef:
     name: {{ .Values.identityRef.name }}
@@ -26,30 +41,20 @@ spec:
   {{- end }}
   managedSecurityGroups:
     {{- toYaml .Values.managedSecurityGroups | nindent 4 }}
-  {{- if .Values.networking.useExistingNetwork }}
-  # Use existing network and subnet
-  {{- if .Values.networking.existingNetwork }}
-  network:
-    {{- if .Values.networking.existingNetwork.id }}
-    id: {{ .Values.networking.existingNetwork.id }}
-    {{- else if .Values.networking.existingNetwork.filter.name }}
-    filter:
-      name: {{ .Values.networking.existingNetwork.filter.name }}
-    {{- end }}
-  {{- end }}
-  {{- if .Values.networking.existingSubnet }}
-  subnet:
-    {{- if .Values.networking.existingSubnet.id }}
-    id: {{ .Values.networking.existingSubnet.id }}
-    {{- else if .Values.networking.existingSubnet.filter.name }}
-    filter:
-      name: {{ .Values.networking.existingSubnet.filter.name }}
-    {{- end }}
-  {{- end }}
-  {{- else }}
-  # Use managed subnets
-  {{- if .Values.networking.managedSubnets }}
+  {{- if .Values.managedSubnets }}
   managedSubnets:
-    {{- toYaml .Values.networking.managedSubnets | nindent 4 }}
+    {{- toYaml .Values.managedSubnets | nindent 4 }}
   {{- end }}
+  {{- if .Values.disableAPIServerFloatingIP }}
+  disableAPIServerFloatingIP: {{ .Values.disableAPIServerFloatingIP }}
+  {{- end }}
+  {{- if .Values.apiServerFloatingIP }}
+  apiServerFloatingIP: {{ .Values.apiServerFloatingIP }}
+  {{- end }}
+  {{- if .Values.networkMTU }}
+  networkMTU: {{ .Values.networkMTU }}
+  {{- end }}
+  {{- if .Values.tags }}
+  tags:
+    {{- toYaml .Values.tags | nindent 4 }}
   {{- end }}

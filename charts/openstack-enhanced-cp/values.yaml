@@ -33,30 +33,65 @@ bastion:
 managedSecurityGroups:
   allowAllInClusterTraffic: false
 
-# Network configuration - supports both managed and existing networks
-networking:
-  # Set to true to use existing OpenStack network and subnet
-  useExistingNetwork: false
-  # Existing network configuration (used when useExistingNetwork is true)
-  existingNetwork:
-    id: ""
-    filter:
-      name: ""
-  # Existing subnet configuration (used when useExistingNetwork is true)  
-  existingSubnet:
-    id: ""
-    filter:
-      name: ""
-  # Managed subnets (used when useExistingNetwork is false)
-  managedSubnets:
-  - cidr: 10.6.0.0/24
+managedSubnets:
+- cidr: 10.6.0.0/24
 
 apiServerLoadBalancer:
   enabled: true
 
+# External network configuration
 externalNetwork:
   filter:
     name: ""
+  # id: ""  # Alternative: specify by ID
+
+# Disable external network entirely (useful for private clusters)
+disableExternalNetwork: false
+
+# Existing network to use for the cluster
+# network:
+#   id: ""  # Specify by ID
+#   filter:  # Alternative: specify by filter
+#     name: ""
+#     projectID: ""
+#     tags: []
+
+# Existing subnets to use for the cluster (maximum 2: one IPv4, one IPv6)
+# subnets:
+#   - id: ""  # Specify by ID
+#     filter:  # Alternative: specify by filter
+#       name: ""
+#       cidr: ""
+#       ipVersion: 4
+#       projectID: ""
+#       tags: []
+#   - id: ""  # Second subnet for dual-stack
+#     filter:
+#       name: ""
+#       cidr: ""
+#       ipVersion: 6
+#       projectID: ""
+#       tags: []
+
+# Existing router to use instead of creating a new one
+# router:
+#   id: ""  # Specify by ID
+#   filter:  # Alternative: specify by filter
+#     name: ""
+#     projectID: ""
+#     tags: []
+
+# API server floating IP configuration
+disableAPIServerFloatingIP: false
+# apiServerFloatingIP: ""  # Specific floating IP to use
+
+# Network MTU configuration
+# networkMTU: 1500
+
+# Tags to apply to all cluster resources
+# tags:
+#   - "cluster-tag"
+#   - "environment-prod"
 
 controlPlane:
   sshKeyName: ""
@@ -66,12 +101,7 @@ controlPlane:
     filter:
       name: ""
   portOpts: []
-  rootVolume: 
-    sizeGiB: 50
-    type: ""  # Cinder volume type - leave empty for default
-    availabilityZone:
-      name: ""
-      from: ""  # Options: "Name" or "Machine"
+  rootVolume: {}
   additionalBlockDevices: []
   securityGroups:
     - filter:
@@ -87,12 +117,7 @@ worker:
     filter:
       name: ""
   portOpts: []
-  rootVolume:
-    sizeGiB: 50
-    type: ""  # Cinder volume type - leave empty for default
-    availabilityZone:
-      name: ""
-      from: ""  # Options: "Name" or "Machine"
+  rootVolume: {}
   additionalBlockDevices: []
   securityGroups:
     - filter:

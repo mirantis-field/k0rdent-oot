@@ -106,80 +106,27 @@
             "items": {
               "type": "string"
             }
+          },
+          "allocationPools": {
+            "type": "array",
+            "description": "Allocation pools for the subnet",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "description": "Start IP address of the allocation pool"
+                },
+                "end": {
+                  "type": "string",
+                  "description": "End IP address of the allocation pool"
+                }
+              },
+              "required": ["start", "end"]
+            }
           }
         },
         "required": ["cidr"]
-      }
-    },
-    "networking": {
-      "type": "object",
-      "description": "Network configuration - supports both managed and existing networks",
-      "properties": {
-        "useExistingNetwork": {
-          "type": "boolean",
-          "description": "Set to true to use existing OpenStack network and subnet instead of creating managed ones"
-        },
-        "existingNetwork": {
-          "type": "object",
-          "description": "Existing network configuration (used when useExistingNetwork is true)",
-          "properties": {
-            "id": {
-              "type": "string",
-              "description": "ID of the existing network"
-            },
-            "filter": {
-              "type": "object",
-              "description": "Filter to find existing network by name",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the existing network"
-                }
-              }
-            }
-          }
-        },
-        "existingSubnet": {
-          "type": "object",
-          "description": "Existing subnet configuration (used when useExistingNetwork is true)",
-          "properties": {
-            "id": {
-              "type": "string",
-              "description": "ID of the existing subnet"
-            },
-            "filter": {
-              "type": "object",
-              "description": "Filter to find existing subnet by name",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Name of the existing subnet"
-                }
-              }
-            }
-          }
-        },
-        "managedSubnets": {
-          "type": "array",
-          "description": "Managed subnet configuration (used when useExistingNetwork is false)",
-          "items": {
-            "type": "object",
-            "properties": {
-              "cidr": {
-                "type": "string",
-                "description": "CIDR block for the subnet"
-              },
-              "dnsNameservers": {
-                "type": "array",
-                "description": "List of DNS nameservers for the subnet",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "required": ["cidr"]
-          }
-        }
       }
     },
     "managedSecurityGroups": {
@@ -189,32 +136,230 @@
         "allowAllInClusterTraffic": {
           "type": "boolean",
           "description": "Allow all traffic within the cluster security groups"
+        },
+        "allNodesSecurityGroupRules": {
+          "type": "array",
+          "description": "Security group rules to apply to all nodes",
+          "items": {
+            "type": "object",
+            "properties": {
+              "direction": {
+                "type": "string",
+                "enum": ["ingress", "egress"],
+                "description": "Direction of the rule"
+              },
+              "etherType": {
+                "type": "string",
+                "enum": ["IPv4", "IPv6"],
+                "description": "Ethernet type"
+              },
+              "portRangeMin": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535,
+                "description": "Minimum port number"
+              },
+              "portRangeMax": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535,
+                "description": "Maximum port number"
+              },
+              "protocol": {
+                "type": "string",
+                "description": "Protocol (tcp, udp, icmp, or protocol number)"
+              },
+              "remoteIPPrefix": {
+                "type": "string",
+                "description": "Remote IP prefix (CIDR)"
+              },
+              "remoteGroupID": {
+                "type": "string",
+                "description": "Remote security group ID"
+              },
+              "remoteManagedGroups": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["controlplane", "worker", "bastion"]
+                },
+                "description": "List of managed groups to allow traffic from"
+              },
+              "name": {
+                "type": "string",
+                "description": "Name of the security group rule"
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the security group rule"
+              }
+            }
+          }
+        },
+        "controlPlaneNodesSecurityGroupRules": {
+          "type": "array",
+          "description": "Security group rules to apply to control plane nodes only",
+          "items": {
+            "$ref": "#/properties/managedSecurityGroups/properties/allNodesSecurityGroupRules/items"
+          }
+        },
+        "workerNodesSecurityGroupRules": {
+          "type": "array",
+          "description": "Security group rules to apply to worker nodes only",
+          "items": {
+            "$ref": "#/properties/managedSecurityGroups/properties/allNodesSecurityGroupRules/items"
+          }
         }
       },
       "required": ["allowAllInClusterTraffic"]
     },
     "network": {
       "type": "object",
-      "description": "Networking resources reference for nodes",
-      "required": [
-        "name",
-        "subnets"
-      ],
-      "properties": {
-        "name": {
-          "description": "Name of the OpenStack network",
-          "type": "string"
-        },
-        "subnets": {
-          "type": "object",
+      "description": "Existing network to use for the cluster",
+      "oneOf": [
+        {
           "properties": {
-            "name": {
-              "description": "Name of the OpenStack subnet",
-              "type": "string"
+            "id": {
+              "type": "string",
+              "description": "ID of the existing network"
             }
-          }
+          },
+          "required": ["id"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "filter": {
+              "type": "object",
+              "description": "Filter to select the network",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the network"
+                },
+                "projectID": {
+                  "type": "string",
+                  "description": "Project ID for filtering"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true,
+                  "description": "Tags for filtering the network"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["filter"],
+          "additionalProperties": false
         }
+      ]
+    },
+    "subnets": {
+      "type": "array",
+      "description": "Existing subnets to use for the cluster (maximum 2: one IPv4, one IPv6)",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "ID of the existing subnet"
+              }
+            },
+            "required": ["id"],
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "filter": {
+                "type": "object",
+                "description": "Filter to select the subnet",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the subnet"
+                  },
+                  "cidr": {
+                    "type": "string",
+                    "description": "CIDR of the subnet"
+                  },
+                  "ipVersion": {
+                    "type": "integer",
+                    "enum": [4, 6],
+                    "description": "IP version (4 or 6)"
+                  },
+                  "projectID": {
+                    "type": "string",
+                    "description": "Project ID for filtering"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true,
+                    "description": "Tags for filtering the subnet"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["filter"],
+            "additionalProperties": false
+          }
+        ]
       }
+    },
+    "router": {
+      "type": "object",
+      "description": "Existing router to use instead of creating a new one",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "ID of the existing router"
+            }
+          },
+          "required": ["id"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "filter": {
+              "type": "object",
+              "description": "Filter to select the router",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the router"
+                },
+                "projectID": {
+                  "type": "string",
+                  "description": "Project ID for filtering"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true,
+                  "description": "Tags for filtering the router"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["filter"],
+          "additionalProperties": false
+        }
+      ]
     },
     "bastion": {
       "type": "object",
@@ -268,34 +413,97 @@
         "enabled": {
           "type": "boolean",
           "description": "Enable/disable external load balancer for the API server"
+        },
+        "allowedCIDRs": {
+          "type": "array",
+          "description": "List of allowed CIDRs for API server access",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "additionalPorts": {
+          "type": "array",
+          "description": "Additional ports to expose on the load balancer",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "uniqueItems": true
         }
       }
     },
     "externalNetwork": {
       "type": "object",
       "description": "External network configuration for the cluster",
-      "properties": {
-        "id": {
-          "type": ["string", "null"],
-          "description": "ID of the external network"
-        },
-        "filter": {
-          "type": "object",
+      "oneOf": [
+        {
           "properties": {
-            "name": {
+            "id": {
               "type": "string",
-              "description": "Name of the external network"
-            },
-            "tags": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "uniqueItems": true
+              "description": "ID of the external network"
             }
-          }
+          },
+          "required": ["id"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "filter": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the external network"
+                },
+                "projectID": {
+                  "type": "string",
+                  "description": "Project ID for filtering"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true,
+                  "description": "Tags for filtering the external network"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["filter"],
+          "additionalProperties": false
         }
-      }
+      ]
+    },
+    "disableExternalNetwork": {
+      "type": "boolean",
+      "description": "Disable external network entirely (useful for private clusters)"
+    },
+    "disableAPIServerFloatingIP": {
+      "type": "boolean",
+      "description": "Disable floating IP for the API server"
+    },
+    "apiServerFloatingIP": {
+      "type": "string",
+      "description": "Specific floating IP address to use for the API server",
+      "format": "ipv4"
+    },
+    "networkMTU": {
+      "type": "integer",
+      "description": "Network MTU configuration",
+      "minimum": 576,
+      "maximum": 9000
+    },
+    "tags": {
+      "type": "array",
+      "description": "Tags to apply to all cluster resources",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
     },
     "controlPlane": {
       "type": "object",
@@ -351,28 +559,32 @@
         "rootVolume": {
           "type": "object",
           "description": "The volume metadata to boot from",
-          "properties": {
-            "availabilityZone": {
-              "type": "object",
-              "description": "AvailabilityZone is the volume availability zone to create the volume in. If not specified, the volume will be created without an explicit availability zone.",
-              "properties": {
-                "from": {
-                  "type": "string",
-                  "description": "From specifies where we will obtain the availability zone for the volume. The options are Name and Machine. If Name is specified then the Name field must also be specified. If Machine is specified the volume will use the value of FailureDomain, if any, from the associated Machine."
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Name is the name of a volume availability zone to use. It is required if From is Name. The volume availability zone name may not contain spaces."
+          "items": {
+            "type": "object",
+            "required": ["sizeGiB"],
+            "properties": {
+              "availabilityZone": {
+                "type": "object",
+                "description": "AvailabilityZone is the volume availability zone to create the volume in. If not specified, the volume will be created without an explicit availability zone.",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "From specifies where we will obtain the availability zone for the volume. The options are Name and Machine. If Name is specified then the Name field must also be specified. If Machine is specified the volume will use the value of FailureDomain, if any, from the associated Machine."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name is the name of a volume availability zone to use. It is required if From is Name. The volume availability zone name may not contain spaces."
+                  }
                 }
+              },
+              "sizeGiB": {
+                "type": "integer",
+                "description": "SizeGiB is the size of the block device in gibibytes (GiB)."
+              },
+              "type": {
+                "type": "string",
+                "description": "Type is the Cinder volume type of the volume. If omitted, the default Cinder volume type that is configured in the OpenStack cloud will be used."
               }
-            },
-            "sizeGiB": {
-              "type": "integer",
-              "description": "SizeGiB is the size of the block device in gibibytes (GiB)."
-            },
-            "type": {
-              "type": "string",
-              "description": "Type is the Cinder volume type of the volume. If omitted, the default Cinder volume type that is configured in the OpenStack cloud will be used."
             }
           }
         },
@@ -510,28 +722,32 @@
         "rootVolume": {
           "type": "object",
           "description": "The volume metadata to boot from",
-          "properties": {
-            "availabilityZone": {
-              "type": "object",
-              "description": "AvailabilityZone is the volume availability zone to create the volume in. If not specified, the volume will be created without an explicit availability zone.",
-              "properties": {
-                "from": {
-                  "type": "string",
-                  "description": "From specifies where we will obtain the availability zone for the volume. The options are Name and Machine. If Name is specified then the Name field must also be specified. If Machine is specified the volume will use the value of FailureDomain, if any, from the associated Machine."
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Name is the name of a volume availability zone to use. It is required if From is Name. The volume availability zone name may not contain spaces."
+          "items": {
+            "type": "object",
+            "required": ["sizeGiB"],
+            "properties": {
+              "availabilityZone": {
+                "type": "object",
+                "description": "AvailabilityZone is the volume availability zone to create the volume in. If not specified, the volume will be created without an explicit availability zone.",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "From specifies where we will obtain the availability zone for the volume. The options are Name and Machine. If Name is specified then the Name field must also be specified. If Machine is specified the volume will use the value of FailureDomain, if any, from the associated Machine."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name is the name of a volume availability zone to use. It is required if From is Name. The volume availability zone name may not contain spaces."
+                  }
                 }
+              },
+              "sizeGiB": {
+                "type": "integer",
+                "description": "SizeGiB is the size of the block device in gibibytes (GiB)."
+              },
+              "type": {
+                "type": "string",
+                "description": "Type is the Cinder volume type of the volume. If omitted, the default Cinder volume type that is configured in the OpenStack cloud will be used."
               }
-            },
-            "sizeGiB": {
-              "type": "integer",
-              "description": "SizeGiB is the size of the block device in gibibytes (GiB)."
-            },
-            "type": {
-              "type": "string",
-              "description": "Type is the Cinder volume type of the volume. If omitted, the default Cinder volume type that is configured in the OpenStack cloud will be used."
             }
           }
         },

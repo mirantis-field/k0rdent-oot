@@ -24,24 +24,8 @@ spec:
         {{ .Values.worker.portOpts | toYaml | nindent 8 }}
       {{- end }}
       {{- if .Values.worker.rootVolume }}
-      {{- if .Values.worker.rootVolume.sizeGiB }}
       rootVolume:
-        sizeGiB: {{ .Values.worker.rootVolume.sizeGiB }}
-        {{- if .Values.worker.rootVolume.type }}
-        type: {{ .Values.worker.rootVolume.type }}
-        {{- end }}
-        {{- if .Values.worker.rootVolume.availabilityZone }}
-        {{- if or .Values.worker.rootVolume.availabilityZone.name .Values.worker.rootVolume.availabilityZone.from }}
-        availabilityZone:
-          {{- if .Values.worker.rootVolume.availabilityZone.from }}
-          from: {{ .Values.worker.rootVolume.availabilityZone.from }}
-          {{- end }}
-          {{- if .Values.worker.rootVolume.availabilityZone.name }}
-          name: {{ .Values.worker.rootVolume.availabilityZone.name }}
-          {{- end }}
-        {{- end }}
-        {{- end }}
-      {{- end }}
+        {{ .Values.worker.rootVolume | toYaml | nindent 8 }}
       {{- end }}
       {{- if gt (len .Values.worker.additionalBlockDevices) 0 }}
       additionalBlockDevices:

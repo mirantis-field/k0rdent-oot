@@ -48,6 +48,10 @@ externalNetwork: # @schema description: External network configuration; type: ob
   filter: # @schema description: Network filter; type: object
     name: "" # @schema description: External network name; type: string
 
+# API Server LoadBalancer configuration
+apiServerLoadBalancer: # @schema description: API server load balancer configuration; type: object
+  enabled: false # @schema description: Whether to enable API server load balancer; type: boolean
+
 bastion: # @schema description: Bastion host configuration; type: object
   enabled: false # @schema description: Whether to enable bastion host; type: boolean
   spec: # @schema description: Bastion specification; type: object

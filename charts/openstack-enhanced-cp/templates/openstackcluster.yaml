@@ -27,7 +27,7 @@ spec:
   {{- end }}
   {{- if .Values.subnets }}
   subnets:
-    {{- toYaml .Values.subnets | nindent 4 }}
+    - {{- toYaml .Values.subnets | nindent 6 }}
   {{- end }}
   {{- if .Values.router }}
   router:

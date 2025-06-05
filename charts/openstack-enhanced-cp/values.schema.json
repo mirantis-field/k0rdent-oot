@@ -259,62 +259,58 @@
       ]
     },
     "subnets": {
-      "type": "array",
-      "description": "Existing subnets to use for the cluster (maximum 2: one IPv4, one IPv6)",
-      "maxItems": 2,
-      "items": {
-        "type": "object",
-        "oneOf": [
-          {
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "ID of the existing subnet"
-              }
-            },
-            "required": ["id"],
-            "additionalProperties": false
+      "type": "object",
+      "description": "Existing subnet to use for the cluster",
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "ID of the existing subnet"
+            }
           },
-          {
-            "properties": {
-              "filter": {
-                "type": "object",
-                "description": "Filter to select the subnet",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Name of the subnet"
-                  },
-                  "cidr": {
-                    "type": "string",
-                    "description": "CIDR of the subnet"
-                  },
-                  "ipVersion": {
-                    "type": "integer",
-                    "enum": [4, 6],
-                    "description": "IP version (4 or 6)"
-                  },
-                  "projectID": {
-                    "type": "string",
-                    "description": "Project ID for filtering"
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "uniqueItems": true,
-                    "description": "Tags for filtering the subnet"
-                  }
+          "required": ["id"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "filter": {
+              "type": "object",
+              "description": "Filter to select the subnet",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the subnet"
                 },
-                "additionalProperties": false
-              }
-            },
-            "required": ["filter"],
-            "additionalProperties": false
-          }
-        ]
-      }
+                "cidr": {
+                  "type": "string",
+                  "description": "CIDR of the subnet"
+                },
+                "ipVersion": {
+                  "type": "integer",
+                  "enum": [4, 6],
+                  "description": "IP version (4 or 6)"
+                },
+                "projectID": {
+                  "type": "string",
+                  "description": "Project ID for filtering"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true,
+                  "description": "Tags for filtering the subnet"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["filter"],
+          "additionalProperties": false
+        }
+      ]
     },
     "router": {
       "type": "object",

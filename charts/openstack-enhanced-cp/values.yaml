@@ -56,22 +56,15 @@ disableExternalNetwork: false
 #     projectID: ""
 #     tags: []
 
-# Existing subnets to use for the cluster (maximum 2: one IPv4, one IPv6)
+# Existing subnet to use for the cluster
 # subnets:
-#   - id: ""  # Specify by ID
-#     filter:  # Alternative: specify by filter
-#       name: ""
-#       cidr: ""
-#       ipVersion: 4
-#       projectID: ""
-#       tags: []
-#   - id: ""  # Second subnet for dual-stack
-#     filter:
-#       name: ""
-#       cidr: ""
-#       ipVersion: 6
-#       projectID: ""
-#       tags: []
+#   id: ""  # Specify by ID
+#   filter:  # Alternative: specify by filter
+#     name: ""
+#     cidr: ""
+#     ipVersion: 4
+#     projectID: ""
+#     tags: []
 
 # Existing router to use instead of creating a new one
 # router:

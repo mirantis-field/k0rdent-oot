@@ -1,0 +1,90 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: dev-cluster
+  namespace: kcm-system
+spec:
+  template: openstack-standalone-cp-1-0-0
+  credential: openstack-cluster-identity-cred
+  config:
+    controlPlaneNumber: 3
+    workersNumber: 2
+    
+    # Cluster network configuration
+    clusterNetwork:
+      pods:
+        cidrBlocks:
+        - "10.244.0.0/16"
+      services:
+        cidrBlocks:
+        - "10.96.0.0/12"
+      serviceDomain: "cluster.local"
+
+    # OpenStack Identity Reference
+    identityRef:
+      name: "openstack-cloud-config"
+      cloudName: "openstack"
+      region: "RegionOne"
+
+    # External network configuration
+    externalNetwork:
+      filter:
+        name: "public"
+
+    # Existing network to use
+    network:
+      filter:
+        name: "net-2"
+
+    # Existing subnets to use
+    subnets:
+      filter:
+        name: "subnet-net-2"
+
+    # Managed subnets (empty to use existing)
+    managedSubnets: []
+
+    # Security groups configuration
+    managedSecurityGroups:
+      allowAllInClusterTraffic: true
+
+    # API server load balancer
+    apiServerLoadBalancer:
+      enabled: true
+
+    # Regional CCM setting
+    ccmRegional: true
+
+    # Control plane configuration
+    controlPlane:
+      flavor: "m1.medium"
+      image:
+        filter:
+          name: "ubuntu-22.04"
+      sshKeyName: "poc-k0rdent-mgmt-key"
+      rootVolume:
+        type: "purestorage-backend"
+        sizeGiB: 50
+      securityGroups:
+        - filter:
+            name: "default"
+    
+    # Worker configuration
+    worker:
+      flavor: "m1.medium"
+      image:
+        filter:
+          name: "ubuntu-22.04"
+      sshKeyName: "poc-k0rdent-mgmt-key"
+      rootVolume:
+        type: "purestorage-backend"
+        sizeGiB: 50
+      securityGroups:
+        - filter:
+            name: "default"
+    
+    # K0s configuration
+    k0s:
+      version: v1.32.5+k0s.1
+      api:
+        extraArgs: {}

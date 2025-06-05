@@ -1,0 +1,53 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackMachineTemplate
+metadata:
+  name: {{ .Values.clusterName }}-cp-mt
+  namespace: {{ .Values.clusterNamespace }}
+  labels:
+    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      flavor: {{ .Values.controlPlane.flavor }}
+      image:
+        filter:
+          name: {{ .Values.controlPlane.image.filter.name }}
+      sshKeyName: {{ .Values.controlPlane.sshKeyName }}
+      {{- if .Values.controlPlane.providerID }}
+      providerID: {{ .Values.controlPlane.providerID }}
+      {{- end }}
+      
+      # Enhanced: Root volume configuration with volume type support
+      {{- if or .Values.controlPlane.rootVolume.size .Values.controlPlane.rootVolume.volumeType .Values.controlPlane.rootVolume.availabilityZone }}
+      rootVolume:
+        {{- if .Values.controlPlane.rootVolume.size }}
+        size: {{ .Values.controlPlane.rootVolume.size }}
+        {{- end }}
+        {{- if .Values.controlPlane.rootVolume.volumeType }}
+        volumeType: {{ .Values.controlPlane.rootVolume.volumeType }}
+        {{- end }}
+        {{- if .Values.controlPlane.rootVolume.availabilityZone }}
+        availabilityZone: {{ .Values.controlPlane.rootVolume.availabilityZone }}
+        {{- end }}
+      {{- else }}
+      rootVolume: {}
+      {{- end }}
+      
+      {{- if .Values.controlPlane.additionalBlockDevices }}
+      additionalBlockDevices:
+        {{- toYaml .Values.controlPlane.additionalBlockDevices | nindent 8 }}
+      {{- end }}
+      
+      {{- if .Values.controlPlane.portOpts }}
+      portOpts:
+        {{- toYaml .Values.controlPlane.portOpts | nindent 8 }}
+      {{- end }}
+      
+      securityGroups:
+        {{- toYaml .Values.controlPlane.securityGroups | nindent 8 }}
+      
+      {{- if .Values.useExistingNetwork }}
+      # Use existing subnet for control plane
+      subnet:
+        {{- include "openstack-enhanced-cp.subnetRef" . | nindent 8 }}
+      {{- end }} 

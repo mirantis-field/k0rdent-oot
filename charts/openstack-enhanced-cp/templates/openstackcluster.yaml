@@ -1,0 +1,51 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackCluster
+metadata:
+  name: {{ .Values.clusterName }}
+  namespace: {{ .Values.clusterNamespace }}
+  labels:
+    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.useExistingNetwork }}
+  # Use existing network configuration
+  network:
+    {{- include "openstack-enhanced-cp.networkRef" . | nindent 4 }}
+  subnet:
+    {{- include "openstack-enhanced-cp.subnetRef" . | nindent 4 }}
+  {{- else }}
+  # Create managed network and subnets
+  managedSubnets:
+    {{- toYaml .Values.managedSubnets | nindent 4 }}
+  {{- end }}
+  
+  externalNetwork:
+    filter:
+      name: {{ .Values.externalNetwork.filter.name }}
+  
+  identityRef:
+    kind: Secret
+    name: {{ .Values.identityRef.name }}
+  
+  {{- if .Values.managedSecurityGroups }}
+  managedSecurityGroups:
+    {{- toYaml .Values.managedSecurityGroups | nindent 4 }}
+  {{- end }}
+  
+  {{- if .Values.apiServerLoadBalancer.enabled }}
+  apiServerLoadBalancer:
+    enabled: {{ .Values.apiServerLoadBalancer.enabled }}
+  {{- end }}
+  
+  {{- if .Values.bastion.enabled }}
+  bastion:
+    enabled: {{ .Values.bastion.enabled }}
+    spec:
+      flavor: {{ .Values.bastion.spec.flavor }}
+      image:
+        filter:
+          name: {{ .Values.bastion.spec.image.filter.name }}
+      sshKeyName: {{ .Values.bastion.spec.sshKeyName }}
+      {{- if .Values.bastion.spec.providerID }}
+      providerID: {{ .Values.bastion.spec.providerID }}
+      {{- end }}
+  {{- end }} 

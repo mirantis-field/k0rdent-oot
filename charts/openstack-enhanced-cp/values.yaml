@@ -1,0 +1,118 @@
+# @schema title: OpenStack Enhanced Control Plane Configuration
+# @schema description: Configuration for OpenStack based Kubernetes cluster with enhanced features
+
+# Cluster parameters
+clusterIdentity: # @schema description: The OpenStack Service Account credentials secret reference, auto-populated; type: object
+  name: "" # @schema description: The OpenStack Service Account credentials secret name, auto-populated; type: string
+
+cluster: # @schema description: Basic cluster information; type: object
+  name: "" # @schema description: The name of the cluster; type: string
+  namespace: "" # @schema description: The namespace where cluster resources will be created; type: string
+
+clusterLabels: {} # @schema description: Labels to apply to the cluster; type: object; additionalProperties: true
+clusterAnnotations: {} # @schema description: Annotations to apply to the cluster; type: object; additionalProperties: true
+
+clusterNetwork: # @schema description: The cluster network configuration; type: object
+  pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; items: string
+      - "10.244.0.0/16"
+  services: # @schema description: The network ranges from which service VIPs are allocated; type: object
+    cidrBlocks: # @schema description: A list of CIDR blocks; type: array; items: string
+      - "10.96.0.0/12"
+  serviceDomain: cluster.local # @schema description: Domain name for services; type: string
+
+# OpenStack parameters
+region: "" # @schema description: OpenStack region where resources will be created; type: string
+
+identityRef: # @schema description: OpenStack identity configuration; type: object
+  name: "" # @schema description: Secret name containing OpenStack credentials; type: string
+  cloudName: "" # @schema description: Cloud name from clouds.yaml; type: string
+
+# Enhanced: Support for existing networks
+useExistingNetwork: false # @schema description: Whether to use existing OpenStack network; type: boolean
+existingNetwork: # @schema description: Existing network configuration; type: object
+  name: "" # @schema description: Name of existing network; type: string
+  id: "" # @schema description: ID of existing network; type: string
+existingSubnet: # @schema description: Existing subnet configuration; type: object
+  name: "" # @schema description: Name of existing subnet; type: string
+  id: "" # @schema description: ID of existing subnet; type: string
+
+# Standard managed subnets (used when useExistingNetwork is false)
+managedSubnets: # @schema description: Managed subnet configuration; type: array
+- cidr: 10.6.0.0/24
+
+managedSecurityGroups: # @schema description: Managed security groups configuration; type: object
+  allowAllInClusterTraffic: false # @schema description: Allow all traffic within cluster; type: boolean
+
+externalNetwork: # @schema description: External network configuration; type: object
+  filter: # @schema description: Network filter; type: object
+    name: "" # @schema description: External network name; type: string
+
+bastion: # @schema description: Bastion host configuration; type: object
+  enabled: false # @schema description: Whether to enable bastion host; type: boolean
+  spec: # @schema description: Bastion specification; type: object
+    sshKeyName: "" # @schema description: SSH key name for bastion; type: string
+    providerID: "" # @schema description: Provider ID for bastion; type: string
+    flavor: "" # @schema description: Flavor for bastion host; type: string
+    image: # @schema description: Image configuration; type: object
+      filter: # @schema description: Image filter; type: object
+        name: "" # @schema description: Image name; type: string
+
+# OpenStack machines parameters
+controlPlane: # @schema description: Control plane parameters; type: object
+  replicas: 3 # @schema description: Number of control plane nodes; type: integer; minimum: 1
+  flavor: "" # @schema description: OpenStack flavor for control plane nodes; type: string
+  image: # @schema description: Image configuration; type: object
+    filter: # @schema description: Image filter; type: object
+      name: "" # @schema description: Image name; type: string
+  sshKeyName: "" # @schema description: SSH key name; type: string
+  # Enhanced: Support for volume types
+  rootVolume: # @schema description: Root volume configuration; type: object
+    size: 50 # @schema description: Root volume size in GB; type: integer; minimum: 1
+    volumeType: "" # @schema description: Volume type; type: string
+    availabilityZone: "" # @schema description: Availability zone; type: string
+  additionalBlockDevices: [] # @schema description: Additional block devices; type: array
+  securityGroups: # @schema description: Security groups; type: array
+    - filter:
+        name: "default"
+        description: ""
+        projectID: ""
+
+worker: # @schema description: Worker parameters; type: object
+  replicas: 2 # @schema description: Number of worker nodes; type: integer; minimum: 0
+  flavor: "" # @schema description: OpenStack flavor for worker nodes; type: string
+  image: # @schema description: Image configuration; type: object
+    filter: # @schema description: Image filter; type: object
+      name: "" # @schema description: Image name; type: string
+  sshKeyName: "" # @schema description: SSH key name; type: string
+  # Enhanced: Support for volume types
+  rootVolume: # @schema description: Root volume configuration; type: object
+    size: 50 # @schema description: Root volume size in GB; type: integer; minimum: 1
+    volumeType: "" # @schema description: Volume type; type: string
+    availabilityZone: "" # @schema description: Availability zone; type: string
+  additionalBlockDevices: [] # @schema description: Additional block devices; type: array
+  securityGroups: # @schema description: Security groups; type: array
+    - filter:
+        name: "default"
+        description: ""
+        projectID: ""
+
+# K0s parameters
+k0s: # @schema description: K0s parameters; type: object
+  version: v1.32.3+k0s.0 # @schema description: K0s version; type: string
+  api: # @schema description: Kubernetes API server parameters; type: object
+    extraArgs: {} # @schema description: Extra arguments for API server; type: object; additionalProperties: true
+  telemetry: # @schema description: Telemetry configuration; type: object
+    enabled: false # @schema description: Whether to enable telemetry; type: boolean
+
+# Enhanced: CCM CA Certificate support
+ccmCaCert: # @schema description: CCM CA certificate configuration; type: object
+  enabled: false # @schema description: Whether to enable CCM CA certificate; type: boolean
+  source: "secret" # @schema description: Source of CA certificate; type: string; enum: [secret, configmap, inline]
+  secretName: "" # @schema description: Secret name containing CA certificate; type: string
+  configMapName: "" # @schema description: ConfigMap name containing CA certificate; type: string
+  content: "" # @schema description: Inline CA certificate content; type: string
+  key: "ca.crt" # @schema description: Key name in secret/configmap; type: string
+
+# Regional CCM support
+ccmRegional: true # @schema description: Whether to enable regional CCM; type: boolean 

@@ -1,0 +1,46 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackCluster
+metadata:
+  name: {{ include "cluster.name" . }}
+  namespace: {{ .Values.cluster.namespace | default .Release.Namespace | trunc 63 }}
+  labels:
+    {{- include "openstack-hosted-cp.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.useExistingNetwork }}
+  # Use existing network configuration
+  network:
+    {{- include "openstack-hosted-cp.networkRef" . | nindent 4 }}
+  subnet:
+    {{- include "openstack-hosted-cp.subnetRef" . | nindent 4 }}
+  {{- else }}
+  # Create managed network and subnets
+  managedSubnets:
+    {{- toYaml .Values.managedSubnets | nindent 4 }}
+  {{- end }}
+  
+  externalNetwork:
+    filter:
+      name: {{ .Values.externalNetwork.filter.name }}
+  
+  identityRef:
+    kind: Secret
+    name: {{ .Values.identityRef.name }}
+  
+  {{- if .Values.managedSecurityGroups }}
+  managedSecurityGroups:
+    {{- toYaml .Values.managedSecurityGroups | nindent 4 }}
+  {{- end }}
+  
+  {{- if .Values.bastion.enabled }}
+  bastion:
+    enabled: {{ .Values.bastion.enabled }}
+    spec:
+      flavor: {{ .Values.bastion.spec.flavor }}
+      image:
+        filter:
+          name: {{ .Values.bastion.spec.image.filter.name }}
+      sshKeyName: {{ .Values.bastion.spec.sshKeyName }}
+      {{- if .Values.bastion.spec.providerID }}
+      providerID: {{ .Values.bastion.spec.providerID }}
+      {{- end }}
+  {{- end }} 

@@ -1,0 +1,73 @@
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: K0sControlPlane
+metadata:
+  name: {{ .Values.clusterName }}-cp
+  namespace: {{ .Values.clusterNamespace }}
+  labels:
+    {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.controlPlaneNumber }}
+  k0sConfigSpec:
+    k0s:
+      apiVersion: k0s.k0sproject.io/v1beta1
+      kind: ClusterConfig
+      spec:
+        api:
+          {{- if .Values.k0s.api.extraArgs }}
+          extraArgs:
+            {{- toYaml .Values.k0s.api.extraArgs | nindent 12 }}
+          {{- end }}
+        extensions:
+          helm:
+            repositories:
+            - name: k0rdent
+              url: https://k0rdent.github.io/kcm
+        network:
+          podCIDR: {{ (index .Values.clusterNetwork.pods.cidrBlocks 0) }}
+          serviceCIDR: {{ (index .Values.clusterNetwork.services.cidrBlocks 0) }}
+          provider: calico
+          calico:
+            mode: vxlan
+            overlay: Always
+            mtu: 0
+            wireguard: false
+    {{- if .Values.ccmCaCert.enabled }}
+    files:
+    # Enhanced: CCM CA Certificate configuration
+    - src: /etc/kubernetes/ccm-ca.crt
+      path: /etc/kubernetes/ccm-ca.crt
+      permissions: "0644"
+      {{- if eq .Values.ccmCaCert.source "inline" }}
+      content: |
+        {{ .Values.ccmCaCert.content | nindent 8 }}
+      {{- else if eq .Values.ccmCaCert.source "secret" }}
+      contentFrom:
+        secret:
+          name: {{ .Values.ccmCaCert.secretName }}
+          key: {{ .Values.ccmCaCert.key }}
+      {{- else if eq .Values.ccmCaCert.source "configmap" }}
+      contentFrom:
+        configMap:
+          name: {{ .Values.ccmCaCert.configMapName }}
+          key: {{ .Values.ccmCaCert.key }}
+      {{- end }}
+    {{- end }}
+    preK0sCommands:
+    # OpenStack Cloud Controller Manager configuration
+    - mkdir -p /etc/kubernetes
+    {{- if .Values.ccmCaCert.enabled }}
+    - echo "CA certificate configured for OpenStack CCM"
+    {{- end }}
+    postK0sCommands:
+    # Apply OpenStack Cloud Controller Manager with regional support
+    {{- if .Values.ccmRegional }}
+    - k0s kubectl apply -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-roles.yaml
+    - k0s kubectl apply -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
+    - k0s kubectl apply -f https://raw.githubusercontent.com/kubernetes/cloud-provider-openstack/master/manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
+    {{- end }}
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: OpenStackMachineTemplate
+      name: {{ .Values.clusterName }}-cp-mt
+  version: {{ .Values.k0s.version }} 

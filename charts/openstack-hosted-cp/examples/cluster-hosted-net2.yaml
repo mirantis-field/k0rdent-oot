@@ -1,0 +1,58 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: my-hosted-net2-cluster
+  namespace: kcm-system
+spec:
+  template: openstack-enhanced-hosted-cp-1-0-0
+  credential: openstack-cluster-identity-cred
+  config:
+    # Hosted control plane parameters
+    managementClusterName: "k0rdent-management"
+    workersNumber: 3
+    
+    # Worker configuration with enhanced volume support
+    worker:
+      flavor: "m1.medium"
+      image:
+        filter:
+          name: "ubuntu-22.04"
+      sshKeyName: "your-keypair"
+      rootVolume:
+        size: 50
+        volumeType: "ssd"  # Specify your volume type
+    
+    # Enhanced: Use existing network net-2 and subnet-net-2
+    useExistingNetwork: true
+    existingNetwork:
+      name: "net-2"
+    existingSubnet:
+      name: "subnet-net-2"
+    
+    # External network configuration
+    externalNetwork:
+      filter:
+        name: "external"  # Replace with your external network name
+    
+    # Identity configuration
+    identityRef:
+      name: "openstack-cluster-identity-cred"
+      cloudName: "openstack"
+      region: "RegionOne"  # Replace with your region
+    
+    # K0smotron service configuration (hosted control plane)
+    k0smotron:
+      service:
+        type: LoadBalancer
+        apiPort: 6443
+        konnectivityPort: 8132
+    
+    # OpenStack Cloud Controller Manager
+    ccmRegional: true
+    
+    # Optional: Enable CCM CA certificate if needed
+    # ccmCaCert:
+    #   enabled: true
+    #   source: "secret"
+    #   secretName: "openstack-ca-cert"
+    #   key: "ca.crt" 

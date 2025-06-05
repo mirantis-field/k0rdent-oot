@@ -1,0 +1,22 @@
+apiVersion: v2
+name: openstack-enhanced-cp
+description: |
+  Enhanced OpenStack ClusterAPI provider template with existing network and volume type support for k0rdent.
+  Extends the standard template with support for existing networks, volume types, and CCM CA certificates.
+type: application
+version: 1.0.0
+appVersion: "v1.32.3+k0s.0"
+annotations:
+  cluster.x-k8s.io/provider: infrastructure-openstack, control-plane-k0sproject-k0smotron, bootstrap-k0sproject-k0smotron
+  k0rdent.mirantis.com/type: deployment
+  cluster.x-k8s.io/bootstrap-k0sproject-k0smotron: v1beta1
+  cluster.x-k8s.io/control-plane-k0sproject-k0smotron: v1beta1
+  cluster.x-k8s.io/infrastructure-openstack: v1beta1
+keywords:
+- k0s
+- clusterapi
+- openstack
+- kubernetes
+maintainers:
+- name: k0rdent-custom
+  email: admin@example.com 

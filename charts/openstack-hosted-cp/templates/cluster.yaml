@@ -1,0 +1,32 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: {{ include "cluster.name" . }}
+  namespace: {{ .Values.cluster.namespace | default .Release.Namespace | trunc 63 }}
+  {{- with .Values.clusterAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "openstack-hosted-cp.labels" . | nindent 4 }}
+    {{- with .Values.clusterLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        {{- toYaml .Values.clusterNetwork.pods.cidrBlocks | nindent 8 }}
+    services:
+      cidrBlocks:
+        {{- toYaml .Values.clusterNetwork.services.cidrBlocks | nindent 8 }}
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: K0smotronControlPlane
+    name: {{ include "k0smotroncontrolplane.name" . }}
+    namespace: {{ .Values.cluster.namespace | default .Release.Namespace | trunc 63 }}
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: OpenStackCluster
+    name: {{ include "cluster.name" . }}
+    namespace: {{ .Values.cluster.namespace | default .Release.Namespace | trunc 63 }} 

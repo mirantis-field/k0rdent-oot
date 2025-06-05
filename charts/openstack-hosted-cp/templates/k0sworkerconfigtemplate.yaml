@@ -1,0 +1,38 @@
+{{- if gt (.Values.workersNumber | int) 0 }}
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: K0sWorkerConfigTemplate
+metadata:
+  name: {{ include "k0sworkerconfigtemplate.name" . }}
+  namespace: {{ .Values.cluster.namespace | default .Release.Namespace | trunc 63 }}
+  labels:
+    {{- include "openstack-hosted-cp.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      {{- if .Values.ccmCaCert.enabled }}
+      files:
+      # Enhanced: CCM CA Certificate configuration for workers
+      - src: /etc/kubernetes/ccm-ca.crt
+        path: /etc/kubernetes/ccm-ca.crt
+        permissions: "0644"
+        {{- if eq .Values.ccmCaCert.source "inline" }}
+        content: |
+          {{ .Values.ccmCaCert.content | nindent 10 }}
+        {{- else if eq .Values.ccmCaCert.source "secret" }}
+        contentFrom:
+          secret:
+            name: {{ .Values.ccmCaCert.secretName }}
+            key: {{ .Values.ccmCaCert.key }}
+        {{- else if eq .Values.ccmCaCert.source "configmap" }}
+        contentFrom:
+          configMap:
+            name: {{ .Values.ccmCaCert.configMapName }}
+            key: {{ .Values.ccmCaCert.key }}
+        {{- end }}
+      {{- end }}
+      preK0sCommands:
+      - mkdir -p /etc/kubernetes
+      {{- if .Values.ccmCaCert.enabled }}
+      - echo "CA certificate configured for OpenStack CCM on worker"
+      {{- end }}
+{{- end }} 

@@ -1,26 +1,36 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackCluster
 metadata:
-  name: {{ .Values.clusterName }}
-  namespace: {{ .Values.clusterNamespace }}
+  name: {{ .Values.cluster.name }}
+  namespace: {{ .Values.cluster.namespace }}
   labels:
     {{- include "openstack-enhanced-cp.labels" . | nindent 4 }}
 spec:
-  {{- if .Values.useExistingNetwork }}
+  {{- if .Values.networking.useExistingNetwork }}
   # Use existing network configuration
   network:
-    {{- include "openstack-enhanced-cp.networkRef" . | nindent 4 }}
+    {{- if .Values.networking.existingNetwork.id }}
+    id: {{ .Values.networking.existingNetwork.id }}
+    {{- else }}
+    filter:
+      name: {{ .Values.networking.existingNetwork.name }}
+    {{- end }}
   subnet:
-    {{- include "openstack-enhanced-cp.subnetRef" . | nindent 4 }}
+    {{- if .Values.networking.existingSubnet.id }}
+    id: {{ .Values.networking.existingSubnet.id }}
+    {{- else }}
+    filter:
+      name: {{ .Values.networking.existingSubnet.name }}
+    {{- end }}
   {{- else }}
   # Create managed network and subnets
   managedSubnets:
-    {{- toYaml .Values.managedSubnets | nindent 4 }}
+    {{- toYaml .Values.networking.managedSubnets | nindent 4 }}
   {{- end }}
   
   externalNetwork:
     filter:
-      name: {{ .Values.externalNetwork.filter.name }}
+      name: {{ .Values.networking.externalNetwork.filter.name }}
   
   identityRef:
     kind: Secret

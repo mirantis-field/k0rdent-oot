@@ -125,14 +125,13 @@ k0s: # @schema description: K0s parameters; type: object
   telemetry: # @schema description: Telemetry configuration; type: object
     enabled: false # @schema description: Whether to enable telemetry; type: boolean
 
-# Enhanced: CCM CA Certificate support
-ccmCaCert: # @schema description: CCM CA certificate configuration; type: object
-  enabled: false # @schema description: Whether to enable CCM CA certificate; type: boolean
-  source: "secret" # @schema description: Source of CA certificate; type: string; enum: [secret, configmap, inline]
-  secretName: "" # @schema description: Secret name containing CA certificate; type: string
-  configMapName: "" # @schema description: ConfigMap name containing CA certificate; type: string
-  content: "" # @schema description: Inline CA certificate content; type: string
-  key: "ca.crt" # @schema description: Key name in secret/configmap; type: string
-
-# Regional CCM support
-ccmRegional: true # @schema description: Whether to enable regional CCM; type: boolean 
+# Cloud Controller Manager configuration
+ccm: # @schema description: Cloud Controller Manager configuration; type: object
+  caCert: # @schema description: CCM CA certificate configuration; type: object
+    enabled: false # @schema description: Whether to enable CCM CA certificate; type: boolean
+    source: "secret" # @schema description: Source of CA certificate; type: string; enum: [secret, configmap, inline]
+    secretName: "" # @schema description: Secret name containing CA certificate; type: string
+    configMapName: "" # @schema description: ConfigMap name containing CA certificate; type: string
+    content: "" # @schema description: Inline CA certificate content; type: string
+    key: "ca.crt" # @schema description: Key name in secret/configmap; type: string
+  regional: true # @schema description: Whether to enable regional CCM; type: boolean 
